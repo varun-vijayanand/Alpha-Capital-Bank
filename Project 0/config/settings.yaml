@@ -1,0 +1,29 @@
+# Alpha Capital Bank — Project 0 Configuration
+# Every generator reads from this file. Change numbers here, not in code.
+
+random_seed: 42
+
+# Time period the synthetic bank history should cover
+simulation:
+  start_date: "2024-01-01"
+  months: 12
+
+# Volume controls
+population:
+  num_customers: 5000
+  num_merchants: 200
+  num_devices: 6000        # roughly 1-2 devices per customer
+
+# Behavioural mix — what fraction of customers fall into each scenario
+scenario_rates:
+  normal: 0.90
+  mule: 0.03
+  structuring: 0.03
+  account_takeover: 0.02
+  fraud: 0.02
+
+# Database connection (actual secrets live in .env, this just names things)
+database:
+  name: "alpha_capital_bank"
+  host: "localhost"
+  port: 5432
