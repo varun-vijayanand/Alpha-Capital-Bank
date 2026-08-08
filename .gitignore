@@ -1,5 +1,5 @@
 venv/
-Project 0/.env
+.env
 __pycache__/
 *.pyc
 .DS_Store
