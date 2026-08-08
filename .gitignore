@@ -1,1 +1,5 @@
-/venv
+venv/
+Project 0/.env
+__pycache__/
+*.pyc
+.DS_Store
