@@ -51,6 +51,57 @@ CATEGORY_AMOUNT_RANGES = {
     "Electronics": (1000, 25000),
 }
 
+def _income_tier(income: float) -> str:
+    """Classify income into a tier used to scale spending amount and frequency."""
+    if income < 8000:
+        return "very_low"
+    elif income < 20000:
+        return "low"
+    elif income < 60000:
+        return "medium"
+    elif income < 150000:
+        return "high"
+    else:
+        return "very_high"
+
+
+# Multiplies category spending amounts based on income tier
+SPENDING_MULTIPLIER = {
+    "very_low": 0.25,
+    "low": 0.5,
+    "medium": 1.0,
+    "high": 1.3,
+    "very_high": 1.6,
+}
+
+# (min, max) count of grocery transactions per month, by income tier
+GROCERY_COUNT_RANGE = {
+    "very_low": (1, 2),
+    "low": (2, 3),
+    "medium": (3, 6),
+    "high": (3, 6),
+    "very_high": (4, 7),
+}
+
+# (min, max) count of discretionary transactions per month, by income tier
+DISCRETIONARY_COUNT_RANGE = {
+    "very_low": (0, 1),
+    "low": (1, 2),
+    "medium": (2, 5),
+    "high": (2, 5),
+    "very_high": (3, 6),
+}
+
+def _cap_to_income(amount: float, income: float, max_fraction: float = 0.5) -> float:
+    """
+    Caps a single purchase so it can never exceed max_fraction of the
+    customer's monthly income — prevents one expensive category (e.g.
+    Electronics) from producing an implausible one-off spend for a
+    low-income customer, regardless of the category's normal amount range.
+    """
+    income_floor = max(income, 2000)  # avoid an unreasonably tiny cap for zero/near-zero income
+    cap = income_floor * max_fraction
+    return min(amount, cap)
 
 def _month_start(base: date, offset: int) -> date:
     """Return the 1st of the month, `offset` months after `base`."""
@@ -162,6 +213,10 @@ def generate_transactions(customers_df, accounts_df, merchants_df, devices_df, l
         secondary = secondary_candidates[0] if secondary_candidates else None
 
         is_employed = cust["occupation"] in EMPLOYED_OCCUPATIONS
+        tier = _income_tier(cust["income"])
+        spending_multiplier = SPENDING_MULTIPLIER[tier]
+        grocery_min, grocery_max = GROCERY_COUNT_RANGE[tier]
+        discretionary_min, discretionary_max = DISCRETIONARY_COUNT_RANGE[tier]
         pays_rent = random.random() < 0.45  # fixed per customer, decided once
 
         for month_offset in range(num_months):
@@ -202,9 +257,10 @@ def generate_transactions(customers_df, accounts_df, merchants_df, devices_df, l
             if "Utilities" in merchants_by_category:
                 merchant_id = random.choice(merchants_by_category["Utilities"])
                 low, high = CATEGORY_AMOUNT_RANGES["Utilities"]
+                amount = _cap_to_income(random.uniform(low, high) * spending_multiplier, cust["income"])
                 add_transaction(
                     sender=primary["account_id"], receiver=None,
-                    amount=random.uniform(low, high), currency=currency,
+                    amount=amount, currency=currency,
                     txn_type=CATEGORY_TO_TXN_TYPE["Utilities"], channel=random.choice(CHANNELS),
                     merchant_id=merchant_id, device_id=random.choice(cust_devices) if cust_devices else None,
                     location_id=merchant_location.get(merchant_id, home_location),
@@ -213,12 +269,13 @@ def generate_transactions(customers_df, accounts_df, merchants_df, devices_df, l
 
             # 4. Groceries (3-6 per month)
             if "Grocery" in merchants_by_category:
-                for _ in range(random.randint(3, 6)):
+                for _ in range(random.randint(grocery_min, grocery_max)):
                     merchant_id = random.choice(merchants_by_category["Grocery"])
                     low, high = CATEGORY_AMOUNT_RANGES["Grocery"]
+                    amount = _cap_to_income(random.uniform(low, high) * spending_multiplier, cust["income"])
                     add_transaction(
                         sender=primary["account_id"], receiver=None,
-                        amount=random.uniform(low, high), currency=currency,
+                        amount=amount, currency=currency,
                         txn_type=CATEGORY_TO_TXN_TYPE["Grocery"], channel=random.choice(CHANNELS),
                         merchant_id=merchant_id, device_id=random.choice(cust_devices) if cust_devices else None,
                         location_id=merchant_location.get(merchant_id, home_location),
@@ -228,15 +285,16 @@ def generate_transactions(customers_df, accounts_df, merchants_df, devices_df, l
             # 5. Discretionary spending (2-5 per month, mixed categories)
             discretionary_categories = ["Fuel", "Restaurants", "Retail", "E-commerce", "Pharmacy", "Electronics"]
             available_categories = [c for c in discretionary_categories if c in merchants_by_category]
-            for _ in range(random.randint(2, 5)):
+            for _ in range(random.randint(discretionary_min, discretionary_max)):
                 if not available_categories:
                     break
                 category = random.choice(available_categories)
                 merchant_id = random.choice(merchants_by_category[category])
                 low, high = CATEGORY_AMOUNT_RANGES[category]
+                amount = _cap_to_income(random.uniform(low, high) * spending_multiplier, cust["income"])
                 add_transaction(
                     sender=primary["account_id"], receiver=None,
-                    amount=random.uniform(low, high), currency=currency,
+                    amount=amount, currency=currency,
                     txn_type=CATEGORY_TO_TXN_TYPE[category], channel=random.choice(CHANNELS),
                     merchant_id=merchant_id, device_id=random.choice(cust_devices) if cust_devices else None,
                     location_id=merchant_location.get(merchant_id, home_location),

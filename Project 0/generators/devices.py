@@ -74,7 +74,7 @@ def generate_devices(customers_df: pd.DataFrame) -> pd.DataFrame:
             )
 
             # first_seen: sometime around onboarding (device already in use, or bought shortly after)
-            days_offset = random.randint(-30, 30)
+            days_offset = random.randint(0, 30)
             first_seen = cust["onboarding_date"] + timedelta(days=days_offset)
             # Don't let first_seen be in the "future" relative to simulation start
             if first_seen > sim_start:
