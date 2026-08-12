@@ -6,6 +6,7 @@ DataFrames into PostgreSQL in dependency order.
 """
 
 import sys
+import pandas as pd
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -21,6 +22,11 @@ from generators.merchants import generate_merchants
 from generators.cards import generate_cards
 from generators.beneficiaries import generate_beneficiaries
 from generators.transactions import generate_transactions
+from scenarios.assign_scenarios import assign_scenarios
+from scenarios.structuring import generate_structuring_transactions
+from scenarios.mule import generate_mule_transactions
+from scenarios.account_takeover import generate_account_takeover_data
+from scenarios.fraud import generate_fraud_transactions
 
 
 SCHEMA_PATH = Path(__file__).parent / "schema.sql"
@@ -42,9 +48,10 @@ def run_schema(engine):
 
     print("Schema created.")
 
-
 def generate_all_data() -> dict:
-    """Run every generator in dependency order, return a dict of DataFrames."""
+    """Run every generator in dependency order, inject all fraud/AML
+    scenarios on top, and return a dict of final DataFrames."""
+
     print("Generating customers...")
     customers_df = generate_customers()
 
@@ -74,6 +81,44 @@ def generate_all_data() -> dict:
         customers_df, accounts_df, merchants_df, devices_df, locations_df
     )
 
+    print("Assigning ground-truth scenarios...")
+    scenario_df = assign_scenarios(customers_df)
+
+    print("Injecting structuring scenario...")
+    structuring_txns = generate_structuring_transactions(
+        customers_df, accounts_df, devices_df, scenario_df
+    )
+    print(f"  {len(structuring_txns):,} structuring transactions added")
+
+    print("Injecting mule scenario...")
+    mule_txns = generate_mule_transactions(
+        customers_df, accounts_df, devices_df, scenario_df
+    )
+    print(f"  {len(mule_txns):,} mule transactions added")
+
+    print("Injecting account takeover scenario...")
+    ato_txns, ato_extra_devices, ato_extra_beneficiaries = generate_account_takeover_data(
+        customers_df, accounts_df, devices_df, locations_df, scenario_df
+    )
+    print(f"  {len(ato_txns):,} ATO transactions, {len(ato_extra_devices):,} new devices, "
+          f"{len(ato_extra_beneficiaries):,} new beneficiaries added")
+
+    print("Injecting fraud scenario...")
+    fraud_txns = generate_fraud_transactions(
+        customers_df, accounts_df, devices_df, merchants_df, locations_df, scenario_df
+    )
+    print(f"  {len(fraud_txns):,} fraud transactions added")
+
+    # --- Merge scenario output into the main tables ---
+    transactions_df = pd.concat(
+        [transactions_df, structuring_txns, mule_txns, ato_txns, fraud_txns],
+        ignore_index=True
+    )
+    devices_df = pd.concat([devices_df, ato_extra_devices], ignore_index=True)
+    beneficiaries_df = pd.concat([beneficiaries_df, ato_extra_beneficiaries], ignore_index=True)
+
+    print(f"\nFinal transaction count (normal + all scenarios): {len(transactions_df):,}")
+
     return {
         "customers": customers_df,
         "locations": locations_df,
@@ -84,14 +129,14 @@ def generate_all_data() -> dict:
         "cards": cards_df,
         "beneficiaries": beneficiaries_df,
         "transactions": transactions_df,
+        "scenario_labels": scenario_df,
     }
-
 
 def load_all(engine, data: dict):
     """Load each DataFrame into its matching table, in dependency order."""
     # Same order as table creation — parents before children
     load_order = [
-        "customers", "locations", "kyc", "accounts",
+        "customers", "scenario_labels", "locations", "kyc", "accounts",
         "devices", "merchants", "cards", "beneficiaries", "transactions"
     ]
 

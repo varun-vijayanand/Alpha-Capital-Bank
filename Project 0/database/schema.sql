@@ -10,6 +10,7 @@ DROP TABLE IF EXISTS devices CASCADE;
 DROP TABLE IF EXISTS accounts CASCADE;
 DROP TABLE IF EXISTS kyc CASCADE;
 DROP TABLE IF EXISTS locations CASCADE;
+DROP TABLE IF EXISTS scenario_labels CASCADE;
 DROP TABLE IF EXISTS customers CASCADE;
 
 CREATE TABLE customers (
@@ -20,6 +21,11 @@ CREATE TABLE customers (
     residency         VARCHAR(20) NOT NULL,
     customer_type     VARCHAR(20) NOT NULL,
     onboarding_date   DATE NOT NULL
+);
+
+CREATE TABLE scenario_labels (
+    customer_id   VARCHAR(20) PRIMARY KEY REFERENCES customers(customer_id),
+    scenario      VARCHAR(30) NOT NULL
 );
 
 CREATE TABLE locations (
