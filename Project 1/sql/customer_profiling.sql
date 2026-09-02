@@ -44,13 +44,14 @@ SELECT
     cb.risk_category,
     COALESCE(ac.account_count, 0) AS account_count,
 
-    -- Fixed, policy-style income bands (monthly income, mass / mass-affluent / affluent / HNI)
+    -- Fixed, policy-style income bands (mass / mass-affluent / affluent / HNI)
     CASE
-        WHEN cb.income < 50000 THEN 'Mass'
-        WHEN cb.income < 150000 THEN 'Mass Affluent'
-        WHEN cb.income < 350000 THEN 'Affluent'
+        WHEN cb.income < 500000 THEN 'Mass'
+        WHEN cb.income < 1500000 THEN 'Mass Affluent'
+        WHEN cb.income < 5000000 THEN 'Affluent'
         ELSE 'HNI'
     END AS income_tier_fixed,
+
 
     -- Relative, percentile-based income tier (quartile within the customer base)
     CASE ip.income_quartile
