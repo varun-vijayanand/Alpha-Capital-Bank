@@ -11,7 +11,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Load .env into environment variables (os.environ)
-load_dotenv()
+from pathlib import Path
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / ".env")
 
 # Path to this file's directory, so settings.yaml is found
 # regardless of where the script is run FROM
