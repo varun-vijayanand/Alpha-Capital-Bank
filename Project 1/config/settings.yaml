@@ -1,0 +1,8 @@
+database:
+  host: localhost
+  port: 5432
+  name: alpha_capital_bank
+  # username/password: pull from the same .env Project 0 already uses
+
+project:
+  name: "Project 1 - Customer Intelligence"
