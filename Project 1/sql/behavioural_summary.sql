@@ -50,7 +50,8 @@ SELECT
     -- timing patterns
     MODE() WITHIN GROUP (ORDER BY s.txn_hour) AS most_common_hour,
     COUNT(*) FILTER (WHERE s.txn_hour BETWEEN 23 AND 24 OR s.txn_hour BETWEEN 0 AND 4) AS odd_hour_txn_count,
-    MODE() WITHIN GROUP (ORDER BY s.txn_dow) AS most_common_day_of_week,
+    COUNT(*) FILTER (WHERE s.txn_dow BETWEEN 1 AND 5) AS weekday_txn_count,
+    COUNT(*) FILTER (WHERE s.txn_dow IN (0, 6)) AS weekend_txn_count,
 
     -- channel / location diversity
     COUNT(DISTINCT s.channel) AS channel_diversity,
