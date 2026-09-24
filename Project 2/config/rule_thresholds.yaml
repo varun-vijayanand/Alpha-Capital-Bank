@@ -1,0 +1,30 @@
+structuring:
+  ctr_threshold: 1000000        # ₹10,00,000 — real Indian CTR limit
+  clustering_window_days: 7     # deposits within this many days count as one cluster
+  min_cluster_total_ratio: 0.7  # cluster total must be >= 70% of the "big sum" to flag
+
+fan_in_fan_out:
+  outflow_ratio_threshold: 0.85 # 85%+ of inflow re-outflowed = suspicious
+  window_days: 1                 # same-day or next-day
+
+dormant_reactivation:
+  dormancy_days: 90              # inactivity period to count as "dormant"
+  reactivation_volume_multiple: 3 # reactivation activity must be 3x prior norm
+
+geographic_anomaly:
+  # distance handled via is_domestic / home_location mismatch for now;
+  # revisit with actual lat/long distance if needed
+  flag_international_if_domestic_baseline: true
+
+high_risk_merchant:
+  min_transaction_count: 1       # even 1 high-risk-category txn can flag (low bar, tune later)
+
+behavioural_deviation:
+  deviation_multiple_threshold: 5  # txn amount >= 5x historical average
+
+large_transaction_peer:
+  income_tier_multiple_threshold: 4  # txn amount >= 4x what's typical for the customer's income tier
+
+burst_velocity:
+  window_hours: 1
+  max_transactions_in_window: 5
