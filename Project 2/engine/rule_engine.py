@@ -21,14 +21,13 @@ from config_loader import get_db_connection_string, load_settings
 # --- Rule registry -----------------------------------------------------
 # As each rule module gets built (rules/batch/structuring.py, etc.),
 # we import its run() function here and add it to this list.
-# Empty for now — this session is scaffolding only.
 
 BATCH_RULES = [
-    # (rule_name, rule_fn)  -- populated starting next session
+    # (rule_name, rule_fn)
 ]
 
 REALTIME_RULES = [
-    # (rule_name, rule_fn)  -- populated later
+    # (rule_name, rule_fn)
 ]
 
 
