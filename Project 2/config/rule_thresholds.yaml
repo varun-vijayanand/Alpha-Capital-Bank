@@ -1,7 +1,9 @@
 structuring:
   ctr_threshold: 1000000        # ₹10,00,000 — real Indian CTR limit
-  clustering_window_days: 7     # deposits within this many days count as one cluster
-  min_cluster_total_ratio: 0.7  # cluster total must be >= 70% of the "big sum" to flag
+  clustering_window_days: 10    # widened from 7 — generator's chunks can spread up to ~9-10 days
+  min_cluster_total_ratio: 0.7  # cluster total must be >= 70% of CTR_THRESHOLD itself
+                                # (NOT 70% of the customer's hidden true total — a detector can't know that)
+  min_deposit_count: 2          # a single large deposit isn't structuring; need at least 2 to call it clustering
 
 fan_in_fan_out:
   outflow_ratio_threshold: 0.85 # 85%+ of inflow re-outflowed = suspicious
