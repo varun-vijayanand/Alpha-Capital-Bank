@@ -18,7 +18,7 @@ THIS_FILE = Path(__file__).resolve()
 import pandas as pd
 sys.path.append(str(THIS_FILE.parents[1]))
 
-sys.path.append(str(Path(__file__).resolve().parents[2] / "Project 0" / "config"))
+sys.path.append(str(Path(__file__).resolve().parents[2] / "00 - fincrime-data-foundation" / "config"))
 from config_loader import get_db_connection_string, load_settings
 from config.rule_config_loader import load_rule_config  # new import, Project 2's own config/
 

@@ -17,7 +17,7 @@ actually seeded as "structuring" scenario customers.
 
 import sys
 from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parents[3] / "Project 0" / "config"))
+sys.path.append(str(Path(__file__).resolve().parents[3] / "00 - fincrime-data-foundation" / "config"))
 from typing import cast
 import pandas as pd
 
