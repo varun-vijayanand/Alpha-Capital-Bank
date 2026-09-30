@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 # make Project 0/config importable
-sys.path.append(str(Path(__file__).resolve().parents[2] / "Project 0" / "config"))
+sys.path.append(str(Path(__file__).resolve().parents[2] / "00 - fincrime-data-foundation" / "config"))
 from config_loader import get_db_connection_string
 
 from sqlalchemy import create_engine, text
